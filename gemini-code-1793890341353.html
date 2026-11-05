@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Taiwan High School Basketball Prospect Rankings | Taiwan 100</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Teko:wght@500;700&family=Noto+Sans+TC:wght@400;700;900&display=swap');
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #0b0f17;
+            color: #f3f4f6;
+        }
+        .font-teko { font-family: 'Teko', sans-serif; }
+        .gold-glow { text-shadow: 0 0 12px rgba(234, 179, 8, 0.6); }
+        .bg-grid {
+            background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+    </style>
+</head>
+<body class="bg-grid min-h-screen">
+
+    <!-- Header / Navbar -->
+    <header class="border-b border-gray-800 bg-gray-950/80 backdrop-blur sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="bg-amber-500 text-black p-2 rounded-lg font-black text-2xl font-teko tracking-wider">TW100</div>
+                <div>
+                    <h1 class="text-xl font-extrabold tracking-wide text-white uppercase flex items-center gap-2">
+                        臺灣高中籃球員評分榜 <span class="bg-red-600 text-xs px-2 py-0.5 rounded text-white font-normal">HBL 專屬</span>
+                    </h1>
+                    <p class="text-xs text-gray-400">Taiwan High School Player Rankings & Scouting Reports</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-2 w-full md:w-auto">
+                <div class="relative w-full md:w-64">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-gray-400 text-sm"></i>
+                    <input type="text" id="searchInput" placeholder="搜尋球員、學校..." class="w-full bg-gray-900 border border-gray-700 text-sm text-white pl-9 pr-4 py-2 rounded-lg focus:outline-none focus:border-amber-500 transition">
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 py-8">
+        
+        <!-- Filters Banner -->
+        <div class="bg-gray-900/90 border border-gray-800 p-4 rounded-xl mb-6 flex flex-wrap gap-4 items-center justify-between">
+            <div class="flex flex-wrap gap-2 items-center">
+                <span class="text-xs text-gray-400 font-bold uppercase mr-2"><i class="fa-solid fa-filter mr-1"></i> 位置篩選:</span>
+                <button onclick="filterPos('ALL')" class="pos-btn bg-amber-500 text-black px-3 py-1 rounded-md text-xs font-bold transition">全部 (All)</button>
+                <button onclick="filterPos('PG')" class="pos-btn bg-gray-800 hover:bg-gray-700 text-gray-300 px-3 py-1 rounded-md text-xs font-bold transition">PG (控衛)</button>
+                <button onclick="filterPos('SG')" class="pos-btn bg-gray-800 hover:bg-gray-700 text-gray-300 px-3 py-1 rounded-md text-xs font-bold transition">SG (分衛)</button>
+                <button onclick="filterPos('SF')" class="pos-btn bg-gray-800 hover:bg-gray-700 text-gray-300 px-3 py-1 rounded-md text-xs font-bold transition">SF (小前)</button>
+                <button onclick="filterPos('PF')" class="pos-btn bg-gray-800 hover:bg-gray-700 text-gray-300 px-3 py-1 rounded-md text-xs font-bold transition">PF (大前)</button>
+                <button onclick="filterPos('C')" class="pos-btn bg-gray-800 hover:bg-gray-700 text-gray-300 px-3 py-1 rounded-md text-xs font-bold transition">C (中鋒)</button>
+            </div>
+            
+            <div class="text-xs text-gray-400">
+                更新時間：<span class="text-gray-200 font-medium">115 學年度 最新評分</span>
+            </div>
+        </div>
+
+        <!-- Player Table Container -->
+        <div class="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden shadow-2xl">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm text-gray-300">
+                    <thead class="bg-gray-950 text-gray-400 uppercase text-xs border-b border-gray-800">
+                        <tr>
+                            <th scope="col" class="px-4 py-3 text-center">排名</th>
+                            <th scope="col" class="px-6 py-3">球員資料</th>
+                            <th scope="col" class="px-4 py-3">學校</th>
+                            <th scope="col" class="px-4 py-3 text-center">位置</th>
+                            <th scope="col" class="px-4 py-3 text-center">身高</th>
+                            <th scope="col" class="px-4 py-3 text-center">星級</th>
+                            <th scope="col" class="px-4 py-3 text-center">評分 (247)</th>
+                            <th scope="col" class="px-4 py-3 text-center">詳情</th>
+                        </tr>
+                    </thead>
+                    <tbody id="playerTableBody" class="divide-y divide-gray-800/60">
+                        <!-- Dynamic Player Rows Generated by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Modal for Player Scouting Report -->
+    <div id="playerModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-gray-900 border border-gray-700 w-full max-w-3xl rounded-2xl overflow-hidden shadow-2xl relative max-h-[90vh] overflow-y-auto">
+            
+            <!-- Close Button -->
+            <button onclick="closeModal()" class="absolute top-4 right-4 bg-gray-800/80 hover:bg-gray-700 text-gray-400 hover:text-white rounded-full p-2 transition z-10">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+
+            <!-- Modal Header -->
+            <div class="bg-gradient-to-r from-gray-950 via-gray-900 to-amber-950/40 p-6 border-b border-gray-800 flex flex-col md:flex-row gap-6 items-center">
+                <img id="mImg" src="" alt="Player" class="w-32 h-32 object-cover rounded-xl border-2 border-amber-500/50 shadow-lg">
+                <div class="text-center md:text-left flex-1">
+                    <div class="flex items-center justify-center md:justify-start gap-2 mb-1">
+                        <span id="mRank" class="bg-amber-500 text-black font-black text-xs px-2 py-0.5 rounded">#1</span>
+                        <span id="mSchool" class="text-xs text-amber-400 font-semibold">學校</span>
+                    </div>
+                    <h2 id="mName" class="text-3xl font-extrabold text-white mb-1">球員姓名</h2>
+                    <p id="mSub" class="text-sm text-gray-400 mb-3">SG/SF | 182 cm</p>
+                    <div class="flex items-center justify-center md:justify-start gap-4">
+                        <div>
+                            <div class="text-xs text-gray-400">綜合評分</div>
+                            <div id="mRating" class="text-2xl font-black font-teko text-amber-400 gold-glow">99</div>
+                        </div>
+                        <div class="h-8 w-px bg-gray-800"></div>
+                        <div>
+                            <div class="text-xs text-gray-400">評級星級</div>
+                            <div id="mStars" class="text-amber-400 text-xs">⭐⭐⭐⭐⭐</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Left: Chart -->
+                <div class="bg-gray-950/50 p-4 rounded-xl border border-gray-800 flex flex-col items-center justify-center">
+                    <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">天賦與能力雷達圖</h3>
+                    <div class="w-full h-64">
+                        <canvas id="radarChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Right: Scouting Report -->
+                <div class="flex flex-col justify-between">
+                    <div>
+                        <h3 class="text-sm font-bold text-amber-400 uppercase tracking-wider mb-2"><i class="fa-solid fa-clipboard-user mr-1"></i> 球探報告 (Scouting Report)</h3>
+                        <p id="mReport" class="text-sm text-gray-300 leading-relaxed bg-gray-950/30 p-3 rounded-lg border border-gray-800/50">
+                            報告載入中...
+                        </p>
+                    </div>
+                    <div class="mt-4 pt-4 border-t border-gray-800">
+                        <div class="text-xs text-gray-400 mb-1">模板與未來上限 (Comparison / Ceiling)</div>
+                        <div id="mCeiling" class="text-sm font-bold text-gray-200">具有優秀單打爆發力與得分手特質</div>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <script>
+        // Data Store (僅包含使用者提供的真實球員)
+        const players = [
+            {
+                rank: 1,
+                name: "許恩翔 (#9)",
+                school: "東泰高中",
+                pos: "SG/SF",
+                height: "182 cm",
+                rating: 99,
+                stars: 5,
+                img: "83ced3c2-2c0f-4d02-beea-087512d9b5ce-98f4e1998e4b8cff5cfc73efefb127a87a66f8753c13e864e71cdb91136532d3.webp",
+                report: "全台頂尖的 5 星高中生！擁有極強的得分爆發力與外線射程，無論是持球切入突破或是定點投射都極具威脅，為東泰高中的絕對進攻核心與場上領袖。",
+                ceiling: "HBL 頂級得分手 / 國家隊未來潛力新星",
+                stats: [98, 92, 95, 90, 88, 96]
+            },
+            {
+                rank: 2,
+                name: "任語璿 (#6)",
+                school: "松山高中",
+                pos: "SF/PF",
+                height: "189 cm",
+                rating: 97,
+                stars: 5,
+                img: "7f7f32cb-50d4-4bd6-a363-261cf3752e25-132d7ea67df569046cda1589ff3045ea7be79ca332dcc5ddccca77aaed9381ea.webp",
+                report: "松山綠衫軍的核心鋒線！具備 189 公分的優質身高與絕佳的防守覆蓋面。能勝任 3、4 號位，具備強悍的籃板爭搶能力與優異的面框單打能力，是攻守兼備的全能戰將。",
+                ceiling: "全能鋒線防守大閘 / UBA 一級即戰力主力",
+                stats: [92, 96, 91, 98, 90, 95]
+            },
+            {
+                rank: 3,
+                name: "陳渝翔 (#10)",
+                school: "東泰高中",
+                pos: "C",
+                height: "203 cm",
+                rating: 97,
+                stars: 5,
+                img: "https://images.unsplash.com/photo-1546519638-68e109498ffc?w=300&auto=format&fit=crop&q=60",
+                report: "東泰高中的禁區頂級巨塔！擁有高達 203 公分的優越身高條件，在禁區護框、火鍋阻攻與防守籃板上具備絕對威嚇力，同時在門前接應與二次進攻破壞力極高。",
+                ceiling: "頂級護框中鋒 / 職業級內線主力巨塔",
+                stats: [88, 99, 87, 98, 90, 97]
+            },
+            {
+                rank: 4,
+                name: "張承曄 (#13)",
+                school: "彰縣成功高中",
+                pos: "SF/PF",
+                height: "195 cm",
+                rating: 95,
+                stars: 5,
+                img: "https://images.unsplash.com/photo-1546519638-68e109498ffc?w=300&auto=format&fit=crop&q=60",
+                report: "彰縣成功高中的核心高角鋒線！擁有 195 cm 的出色身材條件，能靈活兼任 3、4 號位。具備優異的面框攻擊能力、高位分球視野以及強悍的護框影響力。",
+                ceiling: "高規格全能鋒線 / UBA 一級潛力主力",
+                stats: [90, 97, 88, 95, 91, 95]
+            },
+            {
+                rank: 5,
+                name: "余玄騰 (#7)",
+                school: "彰縣成功高中",
+                pos: "PG",
+                height: "187 cm",
+                rating: 96,
+                stars: 5,
+                img: "https://images.unsplash.com/photo-1519766304817-4f37bda74a29?w=300&auto=format&fit=crop&q=60",
+                report: "彰縣成功高中的卓越後場指揮官！擁有 187 cm 的高控衛優勢身材，兼具出色的視野與傳球節奏掌控能力。不僅能有效組織戰術，也能利用高大身材在切入與外線製造極大威脅。",
+                ceiling: "高大組織型控衛 / 頂級後場大腦",
+                stats: [94, 91, 93, 90, 97, 96]
+            },
+            {
+                rank: 6,
+                name: "莊立安 (#8)",
+                school: "光復高中",
+                pos: "PG/SG",
+                height: "182 cm",
+                rating: 96,
+                stars: 5,
+                img: "209703b9-cd36-45d9-a742-c3d02d5d5846-4c7d9fb9f62b0dd1116a14ced98fe8f4c70ac7c0fa6061569677ddb0f2957be4.webp",
+                report: "光復籃猿強權的後場要角！具備 1&2 號位的切換能力，外線出手果決、第一步切入爆發力強，能有效為球隊拉開空間並維持嚴密的壓迫防守，是典型的光復鋼鐵衛士。",
+                ceiling: "攻守兼備雙能衛 / 頂級外線砲火",
+                stats: [95, 90, 94, 93, 92, 96]
+            },
+            {
+                rank: 7,
+                name: "劉右禾 (#7)",
+                school: "南山高中",
+                pos: "SG/SF",
+                height: "186 cm",
+                rating: 95,
+                stars: 5,
+                img: "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=300&auto=format&fit=crop&q=60",
+                report: "傳統強權南山高中的優質鋒衛！擁有 186 cm 的良好身材，切入對抗性強且具有外線定點砲火，在戰術配合與快攻轉換中扮演極為關鍵的進攻終結者角色。",
+                ceiling: "全能型翼側得分手 / UBA 一級主力鋒衛",
+                stats: [94, 92, 93, 90, 91, 95]
+            },
+            {
+                rank: 8,
+                name: "謝瑋恩 (#13)",
+                school: "能仁家商",
+                pos: "SG/SF",
+                height: "182 cm",
+                rating: 95,
+                stars: 5,
+                img: "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=300&auto=format&fit=crop&q=60",
+                report: "能仁家商的核心翼側單打好手！承襲能仁快節奏與高效率進攻體系，具備極佳的快攻奔跑能力與持球突破破壞力，在外線射程與轉換進攻上皆具極強威脅性。",
+                ceiling: "快攻突擊翼側鋒衛 / UBA 一級主力得分手",
+                stats: [94, 91, 95, 89, 90, 95]
+            },
+            {
+                rank: 9,
+                name: "呂書瑋 (#10)",
+                school: "松山高中",
+                pos: "SF/PF",
+                height: "189 cm",
+                rating: 95,
+                stars: 5,
+                img: "https://images.unsplash.com/photo-1546519638-68e109498ffc?w=300&auto=format&fit=crop&q=60",
+                report: "松山綠衫軍的重要鋒線核心！具備 189 cm 的優質身材與強悍防守能力，能靈活轉換於三、四號位之間，兼具外線定點投射與強悍衝搶籃板的拼勁。",
+                ceiling: "高效率全能鋒線 / UBA 一級即戰力",
+                stats: [91, 95, 90, 97, 89, 95]
+            },
+            {
+                rank: 10,
+                name: "何鉦凱 (#9)",
+                school: "光復高中",
+                pos: "PG/SG",
+                height: "183 cm",
+                rating: 95,
+                stars: 5,
+                img: "https://images.unsplash.com/photo-1519766304817-4f37bda74a29?w=300&auto=format&fit=crop&q=60",
+                report: "光復高中後場的穩健雙能衛！擁有 183 cm 的良好後衛身材，在攻守轉換中展現出色的判斷力與外線穩定度，是光復體系中兼具組織與防守壓迫的實戰好手。",
+                ceiling: "穩定後場指揮官 / UBA 一級即戰力",
+                stats: [93, 91, 92, 94, 94, 95]
+            },
+            {
+                rank: 11,
+                name: "王家程 (#8)",
+                school: "彰縣成功高中",
+                pos: "PF",
+                height: "195 cm",
+                rating: 95,
+                stars: 5,
+                img: "https://images.unsplash.com/photo-1546519638-68e109498ffc?w=300&auto=format&fit=crop&q=60",
+                report: "彰縣成功高中的禁區優質大前鋒！擁有 195 cm 的標準強悍對抗身材，高位策應與禁區籃板爭搶極具效率，是球隊內線極為可靠的硬朗防線。",
+                ceiling: "強悍攻防大前鋒 / UBA 一級主力長人",
+                stats: [89, 96, 88, 94, 90, 94]
+            },
+            {
+                rank: 12,
+                name: "田易弘 (#8)",
+                school: "東泰高中",
+                pos: "SG/SF",
+                height: "181 cm",
+                rating: 94,
+                stars: 5,
+                img: "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=300&auto=format&fit=crop&q=60",
+                report: "東泰高中的優質翼側得分手！具備 181 cm 的靈活身材，外線投射穩定且切入具備極強的衝擊力，能有效搭配團隊體系打出高效率進攻。",
+                ceiling: "高效率翼側得分手 / UBA 一級主力鋒衛",
+                stats: [93, 89, 94, 90, 91, 94]
+            },
+            {
+                rank: 13,
+                name: "詹竣丞 (#7)",
+                school: "泰山高中",
+                pos: "PG",
+                height: "177 cm",
+                rating: 94,
+                stars: 5,
+                img: "https://images.unsplash.com/photo-1519766304817-4f37bda74a29?w=300&auto=format&fit=crop&q=60",
+                report: "泰山高中黑色風暴的球場大腦！速度飛快、持球突破破壞力十足，具備精準的戰術執行力與全場壓迫防守意識，是引導全隊發動快攻反擊的發電機。",
+                ceiling: "快速反擊型指揮官 / 後場防守大閘",
+                stats: [92, 88, 96, 92, 95, 94]
+            },
+            {
+                rank: 14,
+                name: "紀伍柏俊 (#5)",
+                school: "東泰高中",
+                pos: "PG/SG",
+                height: "177 cm",
+                rating: 94,
+                stars: 5,
+                img: "https://images.unsplash.com/photo-1546519638-68e109498ffc?w=300&auto=format&fit=crop&q=60",
+                report: "東泰高中速度與機動性兼備的雙能衛！身材靈活、運球節奏刁鑽，在轉換快攻中能精準送出導傳或利用刁鑽的外線與切入撕裂對手防線，是後場極具破壞力的刺客。",
+                ceiling: "高效率得分雙能衛 / UBA 優秀後場輪替",
+                stats: [93, 87, 95, 91, 93, 94]
+            },
+            {
+                rank: 15,
+                name: "能得勝 (#11)",
+                school: "東泰高中",
+                pos: "PF/C",
+                height: "192 cm",
+                rating: 95,
+                stars: 5,
+                img: "https://images.unsplash.com/photo-1546519638-68e109498ffc?w=300&auto=format&fit=crop&q=60",
+                report: "東泰高中禁區的扎實核心！具備 192 cm 的優質身高與厚實身材，高低位策應配合流暢，腳步靈活且卡位籃板極具威嚇力，能有效撐起球隊的內線防線與進攻高點。",
+                ceiling: "扎實禁區悍將 / UBA 一級主力長人",
+                stats: [89, 96, 88, 94, 91, 95]
+            },
+            {
+                rank: 16,
+                name: "林柏宇 (#11)",
+                school: "南湖高中",
+                pos: "PG/SG",
+                height: "178 cm",
+                rating: 94,
+                stars: 5,
+                img: "https://images.unsplash.com/photo-1519766304817-4f37bda74a29?w=300&auto=format&fit=crop&q=60",
+                report: "南湖高中風暴戰術的雙能衛要角！擁有一流的推進速度與外線得分天賦，在球場上展現強烈的主導力，能迅速切換控球組織與得分模式，是南湖後場的重要發電機。",
+                ceiling: "快節奏雙能衛 / UBA 一級後場核心",
+                stats: [93, 88, 95, 91, 92, 94]
+            },
+            {
+                rank: 17,
+                name: "賴浚鎰 (#8)",
+                school: "松山高中",
+                pos: "PF/C",
+                height: "190 cm",
+                rating: 89,
+                stars: 4,
+                img: "https://images.unsplash.com/photo-1546519638-68e109498ffc?w=300&auto=format&fit=crop&q=60",
+                report: "松山綠衫軍防守體系中的硬派內線！擁有 190 cm 的實用身材，承襲松山一貫的嚴密防守傳統，在禁區對抗、卡位爭搶籃板以及阻攻護框上展現出強烈的拼勁與團隊價值。",
+                ceiling: "硬朗防守型內線 / UBA 優質團隊拼圖",
+                stats: [82, 90, 84, 92, 86, 89]
+            },
+            {
+                rank: 18,
+                name: "陳展維 (#14)",
+                school: "南山高中",
+                pos: "SF",
+                height: "181 cm",
+                rating: 89,
+                stars: 4,
+                img: "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=300&auto=format&fit=crop&q=60",
+                report: "南山高中翼側的防守與快攻要角！持球與無球兼備，具備優異的攻防轉換推進能力與定點外線火力，是球隊戰術運作中極具效率的實戰鋒線。",
+                ceiling: "靈活翼側前鋒 / 團隊核心拼圖",
+                stats: [86, 89, 87, 91, 88, 89]
+            },
+            {
+                rank: 19,
+                name: "周宥璟 (#15)",
+                school: "彰縣成功高中",
+                pos: "C",
+                height: "195 cm",
+                rating: 89,
+                stars: 4,
+                img: "https://images.unsplash.com/photo-1546519638-68e109498ffc?w=300&auto=format&fit=crop&q=60",
+                report: "彰縣成功高中禁區的主要屏障！擁有 195 cm 的標準中鋒身材，卡位意識佳且保護籃板能力優異，在門前具備極高的進攻卡位威脅。",
+                ceiling: "實用型護框中鋒 / 內線門神",
+                stats: [83, 91, 82, 92, 85, 89]
+            },
+            {
+                rank: 20,
+                name: "張弘揚 (#8)",
+                school: "三重商工",
+                pos: "SF",
+                height: "190 cm",
+                rating: 89,
+                stars: 4,
+                img: "https://images.unsplash.com/photo-1546519638-68e109498ffc?w=300&auto=format&fit=crop&q=60",
+                report: "三重商工最具威脅的高角鋒線！具備 190 cm 的優質小前鋒身材，對抗性強且兼具突破爆發力與中遠距離投射，能為團隊提供穩定的得分火力和護框支援。",
+                ceiling: "高大得分鋒線 / 團隊核心主力",
+                stats: [88, 90, 86, 88, 87, 89]
+            },
+            {
+                rank: 21,
+                name: "唐廉傑 (#6)",
+                school: "南湖高中",
+                pos: "PF",
+                height: "196 cm",
+                rating: 89,
+                stars: 4,
+                img: "https://images.unsplash.com/photo-1546519638-68e109498ffc?w=300&auto=format&fit=crop&q=60",
+                report: "南湖高中禁區的高塔戰力！身高達 196 cm，腳步靈活且具備優異的高低位分球意識，在防守端能有效壓制對手切入，是團隊攻防的重要樞紐。",
+                ceiling: "靈活機動型大前鋒 / 禁區核心",
+                stats: [84, 93, 85, 91, 88, 89]
+            },
+            {
+                rank: 22,
+                name: "游秉硯 (#10)",
+                school: "錦和高中",
+                pos: "PG/SG",
+                height: "177 cm",
+                rating: 89,
+                stars: 4,
+                img: "https://images.unsplash.com/photo-1519766304817-4f37bda74a29?w=300&auto=format&fit=crop&q=60",
+                report: "錦和高中後場的實戰大腦！突破第一步迅速且刁鑽，外線出手時機掌控精準，同時具備出色的全場壓迫防守意識，能隨時帶起團隊的反擊節奏。",
+                ceiling: "攻守兼備後場刺客 / 快速發電機",
+                stats: [87, 85, 91, 89, 90, 89]
+            },
+            {
+                rank: 23,
+                name: "楊松霖 (#15)",
+                school: "南山高中",
+                pos: "C",
+                height: "195 cm",
+                rating: 89,
+                stars: 4,
+                img: "https://images.unsplash.com/photo-1546519638-68e109498ffc?w=300&auto=format&fit=crop&q=60",
+                report: "南山高中傳統內線要角！195 cm 的標準禁區身材，卡位動作確實，在高強度對抗中能持續穩定拿下二次籃板並於門前補籃得分。",
+                ceiling: "硬朗團隊型中鋒 / 禁區守護者",
+                stats: [83, 92, 83, 91, 86, 89]
+            },
+            {
+                rank: 24,
+                name: "鄭薺 (#27)",
+                school: "宜蘭高中",
+                pos: "SF/PF",
+                height: "193 cm",
+                rating: 89,
+                stars: 4,
+                img: "https://images.unsplash.com/photo-1546519638-68e109498ffc?w=300&auto=format&fit=crop&q=60",
+                report: "宜蘭高中高度與機動性兼具的鋒線悍將！擁有 193 cm 的優秀身材，在場上能兼任三、四號位，兼具外線投射能力與籃板拼搶拚勁。",
+                ceiling: "全能前鋒 / 團隊核心鋒線",
+                stats: [86, 91, 85, 90, 86, 89]
+            },
+            {
+                rank: 25,
+                name: "葉以勒 (#12)",
+                school: "能仁家商",
+                pos: "SF/PF",
+                height: "182 cm",
+                rating: 89,
+                stars: 4,
+                img: "https://images.unsplash.com/photo-1546519638-68e109498ffc?w=300&auto=format&fit=crop&q=60",
+                report: "能仁家商極具拼勁的硬朗鋒線！雖然身高 182 cm 但卡位動作扎實、卡位抗壓性極佳，能在禁區製造強大的衝擊。",
+                ceiling: "硬朗防守鋒線 / 高效率團隊拼圖",
+                stats: [85, 88, 86, 91, 85, 89]
+            },
+            {
+                rank: 26,
+                name: "簡紹倫 (#12)",
+                school: "南山高中",
+                pos: "PG",
+                height: "182 cm",
+                rating: 89,
+                stars: 4,
+                img: "https://images.unsplash.com/photo-1519766304817-4f37bda74a29?w=300&auto=format&fit=crop&q=60",
+                report: "傳統強權南山高中的後場核心控衛！具備 182 cm 的標準優質控衛身材，大腦清晰且視野寬廣，能精準執行總教練的戰術指揮，在關鍵時刻展現穩健的心態與傳球時機。",
+                ceiling: "穩健組織型控衛 / 團隊後場指揮官",
+                stats: [86, 86, 89, 88, 91, 89]
+            },
+            {
+                rank: 27,
+                name: "林浩宸 (#17)",
+                school: "南山高中",
+                pos: "SF/PF",
+                height: "190 cm",
+                rating: 89,
+                stars: 4,
+                img: "https://images.unsplash.com/photo-1546519638-68e109498ffc?w=300&auto=format&fit=crop&q=60",
+                report: "南山高中極具身材優勢的機動前鋒！具備 190 cm 的標準高角鋒線優勢，能兼任 3、4 號位，具備強悍的籃板保護能力與穩健的高位分球意識。",
+                ceiling: "全能防守前鋒 / UBA 一級潛力主力",
+                stats: [85, 91, 84, 91, 87, 89]
+            },
+            {
+                rank: 28,
+                name: "林靖晏 (#7)",
+                school: "東山高中",
+                pos: "PG/SG",
+                height: "178 cm",
+                rating: 89,
+                stars: 4,
+                img: "https://images.unsplash.com/photo-1519766304817-4f37bda74a29?w=300&auto=format&fit=crop&q=60",
+                report: "東山高中戰鬥鴨軍團的後場要角！速度快且防守黏著度極高，在推進攻防轉換時具備極佳的傳球視野，同時具備定點外線冷箭能力。",
+                ceiling: "高壓防守型雙能衛 / 戰術指揮官",
+                stats: [87, 84, 90, 89, 88, 89]
+            },
+            {
+                rank: 29,
+                name: "楊鎧任 (#7)",
+                school: "南湖高中",
+                pos: "SF",
+                height: "183 cm",
+                rating: 89,
+                stars: 4,
+                img: "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=300&auto=format&fit=crop&q=60",
+                report: "南湖高中快攻風暴中的靈魂鋒線！擁有 183 cm 的靈活身材，擅長轉換快攻無球跑位與切入突破，是團隊戰術運作中的高效率得分點。",
+                ceiling: "快攻突擊前鋒 / 團隊核心翼側",
+                stats: [88, 87, 89, 86, 86, 89]
+            },
+            {
+                rank: 30,
+                name: "陳子錫 (#12)",
+                school: "中信高中",
+                pos: "PF/C",
+                height: "197 cm",
+                rating: 89,
+                stars: 4,
+                img: "https://images.unsplash.com/photo-1546519638-68e109498ffc?w=300&auto=format&fit=crop&q=60",
+                report: "中信高中禁區第一巨塔！身高高達 197 cm，具備良好的禁區封蓋影響力與二次籃板拼搶能力，是球隊保護籃框的最強後盾。",
+                ceiling: "禁區護框大閘 / 主力內線巨塔",
+                stats: [82, 94, 80, 93, 85, 89]
+            },
+            {
+                rank: 31,
+                name: "張子逸 (#11)",
+                school: "中信高中",
+                pos: "SF/PF",
+                height: "186 cm",
+                rating: 89,
+                stars: 4,
+                img: "https://images.unsplash.com/photo-1546519638-68e109498ffc?w=300&auto=format&fit=crop&q=60",
+                report: "中信高中的全能鋒線活棋！具備 186 cm 的對抗性身材，能在三四號位靈活切換，擁有穩定的中距離與防守端優異的抗壓性。",
+                ceiling: "實戰型硬朗前鋒 / 攻防樞紐",
+                stats: [86, 89, 85, 89, 87, 89]
+            },
+            {
+                rank: 32,
+                name: "李家禾 (#12)",
+                school: "光復高中",
+                pos: "PF",
+                height: "191 cm",
+                rating: 89,
+                stars: 4,
+                img: "https://images.unsplash.com/photo-1546519638-68e109498ffc?w=300&auto=format&fit=crop&q=60",
+                report: "光復籃猿鋼鐵防線中的禁區悍將！191 cm 具備出色的籃板卡位與禁區卡位意識，徹底貫徹光復高壓防守與卡位籃板體系。",
+                ceiling: "防守型硬派大前鋒 / 禁區防禦牆",
+                stats: [83, 91, 84, 92, 86, 89]
+            },
+            {
+                rank: 33,
+                name: "李彥融 (#9)",
+                school: "莊敬高職",
+                pos: "PG/SG",
+                height: "184 cm",
+                rating: 89,
+                stars: 4,
+                img: "https://images.unsplash.com/photo-1519766304817-4f37bda74a29?w=300&auto=format&fit=crop&q=60",
+                report: "莊敬高職後場的核心發電機！184 cm 的高後衛身材在組織與單打時皆佔盡優勢，切入破壞力強且具備優異的外線出手意識。",
+                ceiling: "高大突破型雙能衛 / 後場進攻要角",
+                stats: [88, 86, 89, 86, 88, 89]
+            },
+            {
+                rank: 34,
+                name: "陳證皓 (#16)",
+                school: "北科附工",
+                pos: "SG",
+                height: "183 cm",
+                rating: 84,
+                stars: 3,
+                img: "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=300&auto=format&fit=crop&q=60",
+                report: "北科附工外線的重要得分砲火！具備 183 cm 的標準得分後衛身材，定點三分出手果決，在防守端具備優異的防守態度與衝搶意識。",
+                ceiling: "定點外線射手 / 實戰型翼側輪替",
+                stats: [82, 81, 82, 83, 83, 84]
+            },
+            {
+                rank: 35,
+                name: "林穎浩 (#8)",
+                school: "南湖高中",
+                pos: "SG/SF",
+                height: "184 cm",
+                rating: 84,
+                stars: 3,
+                img: "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=300&auto=format&fit=crop&q=60",
+                report: "南湖高中風暴體系中的實戰雙能鋒！擁有 184 cm 的好身形，能在 2、3 號位游走，擅長快攻轉換時的衝刺破壞與外線定點埋伏。",
+                ceiling: "穩健翼側輪替 / 實戰型得分手",
+                stats: [83, 82, 84, 82, 81, 84]
+            },
+            {
+                rank: 36,
+                name: "葉宸瑄 (#11)",
+                school: "光復高中",
+                pos: "PF",
+                height: "193 cm",
+                rating: 84,
+                stars: 3,
+                img: "https://images.unsplash.com/photo-1546519638-68e109498ffc?w=300&auto=format&fit=crop&q=60",
+                report: "光復高中內線藍領禁區大將！193 cm 的身高在禁區積極卡位、拚搶防守籃板，確實執行教練團交辦的防守任務。",
+                ceiling: "防守型藍領內線 / 禁區苦工",
+                stats: [78, 86, 80, 87, 81, 84]
+            },
+            {
+                rank: 37,
+                name: "陳捷恩 (#11)",
+                school: "和平高中",
+                pos: "SF/PF",
+                height: "191 cm",
+                rating: 84,
+                stars: 3,
+                img: "https://images.unsplash.com/photo-1546519638-68e109498ffc?w=300&auto=format&fit=crop&q=60",
+                report: "和平高中高度優勢顯著的前線大將！具備 191 cm 身高，在場上能勝任三四號位，具備良好的高度對抗與協防護框能力。",
+                ceiling: "高大鋒線輪替 / 實用內外連結",
+                stats: [80, 85, 81, 85, 82, 84]
+            },
+            {
+                rank: 38,
+                name: "黃泰竣 (#9)",
+                school: "治平高中",
+                pos: "PG/SG",
+                height: "178 cm",
+                rating: 84,
+                stars: 3,
+                img: "https://images.unsplash.com/photo-1519766304817-4f37bda74a29?w=300&auto=format&fit=crop&q=60",
+                report: "治平高中後場的拼命三郎！身材靈活、速度快，在場上展現強悍的盯人防守與敏銳的抄截判斷，能有效活化球隊的後場節奏。",
+                ceiling: "高壓防守後衛 / 實戰型組織者",
+                stats: [82, 80, 85, 84, 83, 84]
+            },
+            {
+                rank: 39,
+                name: "朱子帆 (#5)",
+                school: "彰縣成功高中",
+                pos: "PG",
+                height: "175 cm",
+                rating: 84,
+                stars: 3,
+                img: "https://images.unsplash.com/photo-1519766304817-4f37bda74a29?w=300&auto=format&fit=crop&q=60",
+                report: "彰縣成功高中的迷你發電機！雖然身高 175 cm，但運球重心穩、切入節奏變化多端，能冷靜執行半場戰術並送出精準導傳。",
+                ceiling: "組織型控球後衛 / 替補奇兵",
+                stats: [81, 78, 86, 82, 85, 84]
+            },
+            {
+                rank: 40,
+                name: "魏楨洋 (#12)",
+                school: "基隆商工",
+                pos: "SF/PF",
+                height: "190 cm",
+                rating: 84,
+                stars: 3,
+                img: "https://images.unsplash.com/photo-1546519638-68e109498ffc?w=300&auto=format&fit=crop&q=60",
+                report: "基隆商工傳統硬派球風的鋒線悍將！擁有 190 cm 的好身材，擅長在禁區對抗中搏取犯規，並具備扎實的卡位籃板基本功。",
+                ceiling: "硬派對抗前鋒 / 禁區實戰戰力",
+                stats: [81, 85, 82, 84, 81, 84]
+            },
+            {
+                rank: 41,
+                name: "黃宸澔 (#8)",
+                school: "南山高中",
+                pos: "SF/PF",
+                height: "186 cm",
+                rating: 84,
+                stars: 3,
+                img: "https://images.unsplash.com/photo-1546519638-68e109498ffc?w=300&auto=format&fit=crop&q=60",
+                report: "南山高中深厚板凳深度中的優質鋒線！186 cm 具備出色的無球跑動意識與中距離投射手感，在攻守兩端都能提供高效率的穩定輸出。",
+                ceiling: "高效率側翼輪替 / 實戰型鋒線",
+                stats: [83, 83, 83, 83, 82, 84]
+            }
+        ];
+
+        let currentPosFilter = 'ALL';
+        let chartInstance = null;
+
+        // Render Table
+        function renderTable(data) {
+            const tbody = document.getElementById('playerTableBody');
+            tbody.innerHTML = '';
+
+            if (data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" class="text-center py-8 text-gray-500">尚無符合條件的球員資料</td></tr>`;
+                return;
+            }
+
+            data.forEach(p => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-gray-800/50 transition cursor-pointer border-b border-gray-800/40";
+                tr.onclick = () => openModal(p);
+
+                const starIcons = '⭐'.repeat(p.stars);
+                const rankBadgeClass = p.rank === 1 ? 'bg-amber-500 text-black' : p.rank <= 3 ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 'bg-gray-800 text-gray-300';
+
+                tr.innerHTML = `
+                    <td class="px-4 py-3 text-center">
+                        <span class="inline-block px-2.5 py-1 rounded font-black font-teko text-base ${rankBadgeClass}">
+                            #${p.rank}
+                        </span>
+                    </td>
+                    <td class="px-6 py-3">
+                        <div class="flex items-center gap-3">
+                            <img src="${p.img}" class="w-10 h-10 rounded-full object-cover border border-gray-700" alt="${p.name}">
+                            <div>
+                                <div class="font-bold text-white">${p.name}</div>
+                                <div class="text-xs text-gray-400">${p.pos}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-4 py-3 font-medium text-gray-300">${p.school}</td>
+                    <td class="px-4 py-3 text-center">
+                        <span class="bg-gray-800 text-gray-300 text-xs px-2 py-1 rounded border border-gray-700">${p.pos}</span>
+                    </td>
+                    <td class="px-4 py-3 text-center font-mono text-sm">${p.height}</td>
+                    <td class="px-4 py-3 text-center text-xs">${starIcons}</td>
+                    <td class="px-4 py-3 text-center">
+                        <span class="font-teko font-bold text-xl text-amber-400">${p.rating}</span>
+                    </td>
+                    <td class="px-4 py-3 text-center">
+                        <button class="bg-gray-800 hover:bg-amber-500 hover:text-black text-gray-300 text-xs px-3 py-1 rounded transition">分析</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Filter Logic
+        function filterPos(pos) {
+            currentPosFilter = pos;
+            document.querySelectorAll('.pos-btn').forEach(btn => {
+                if(btn.innerText.includes(pos) || (pos === 'ALL' && btn.innerText.includes('全部'))) {
+                    btn.className = "pos-btn bg-amber-500 text-black px-3 py-1 rounded-md text-xs font-bold transition";
+                } else {
+                    btn.className = "pos-btn bg-gray-800 hover:bg-gray-700 text-gray-300 px-3 py-1 rounded-md text-xs font-bold transition";
+                }
+            });
+            applyFilters();
+        }
+
+        document.getElementById('searchInput').addEventListener('input', applyFilters);
+
+        function applyFilters() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = players.filter(p => {
+                const matchPos = currentPosFilter === 'ALL' || p.pos.includes(currentPosFilter);
+                const matchQuery = p.name.toLowerCase().includes(query) || p.school.toLowerCase().includes(query);
+                return matchPos && matchQuery;
+            });
+            renderTable(filtered);
+        }
+
+        // Modal Logic
+        function openModal(player) {
+            document.getElementById('mImg').src = player.img;
+            document.getElementById('mName').innerText = player.name;
+            document.getElementById('mSchool').innerText = player.school;
+            document.getElementById('mSub').innerText = `${player.pos} | ${player.height}`;
+            document.getElementById('mRating').innerText = player.rating;
+            document.getElementById('mStars').innerText = '⭐'.repeat(player.stars);
+            document.getElementById('mRank').innerText = `#${player.rank}`;
+            document.getElementById('mReport').innerText = player.report;
+            document.getElementById('mCeiling').innerText = player.ceiling;
+
+            document.getElementById('playerModal').classList.remove('hidden');
+
+            // Render Chart
+            renderChart(player.stats);
+        }
+
+        function closeModal() {
+            document.getElementById('playerModal').classList.add('hidden');
+        }
+
+        function renderChart(statsData) {
+            const ctx = document.getElementById('radarChart').getContext('2d');
+            
+            if (chartInstance) {
+                chartInstance.destroy();
+            }
+
+            chartInstance = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: ['進攻技巧', '身體天賦', '爆發力', '防守意識', '球商', '發展上限'],
+                    datasets: [{
+                        label: '能力評分',
+                        data: statsData,
+                        backgroundColor: 'rgba(245, 158, 11, 0.25)',
+                        borderColor: 'rgba(245, 158, 11, 1)',
+                        borderWidth: 2,
+                        pointBackgroundColor: 'rgba(245, 158, 11, 1)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            angleLines: { color: 'rgba(255, 255, 255, 0.1)' },
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                            pointLabels: { color: '#9ca3af', font: { size: 11 } },
+                            ticks: { display: false, backdropColor: 'transparent' },
+                            suggestedMin: 50,
+                            suggestedMax: 100
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
+
+        // Initial Load
+        renderTable(players);
+    </script>
+</body>
+</html>
